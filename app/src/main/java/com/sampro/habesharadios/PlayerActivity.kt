@@ -1,6 +1,5 @@
 package com.sampro.habesharadios
 
-import android.media.MediaPlayer
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
@@ -9,20 +8,15 @@ import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.TextView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.sampro.habesharadios.utils.RadioStations
 import java.lang.Exception
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.MediaItem.LiveConfiguration
-import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.Timeline
 import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 
 class PlayerActivity : AppCompatActivity() {
 
     private var player: ExoPlayer? = null
-
-    private var mp: MediaPlayer? = null
 
     private lateinit var fabPlay: FloatingActionButton
     private lateinit var fabPause: FloatingActionButton
