@@ -7,21 +7,20 @@ import android.os.Handler
 import android.util.Log
 import android.widget.ImageView
 import android.widget.SeekBar
+import android.widget.TextView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.sampro.habesharadios.utils.RadioStations
 import java.lang.Exception
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.MediaItem.LiveConfiguration
+import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.Timeline
 import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 
 class PlayerActivity : AppCompatActivity() {
 
-//    private val player = ExoPlayer.Builder(this)
-//        .setMediaSourceFactory(
-//            DefaultMediaSourceFactory(this).setLiveTargetOffsetMs(5000))
-//        .build()
-    private lateinit var player: ExoPlayer
+    private var player: ExoPlayer? = null
 
     private var mp: MediaPlayer? = null
 
@@ -32,6 +31,10 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var seekBar: SeekBar
 
     private lateinit var ivPlayer: ImageView
+
+    private lateinit var tvPlayTime: TextView
+
+    private var playTime = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,61 +48,72 @@ class PlayerActivity : AppCompatActivity() {
 
         ivPlayer = findViewById(R.id.ivPlayer)
 
+        tvPlayTime = findViewById(R.id.tvPlayTime)
+
         val bundle : Bundle? = intent.extras
-        val station = bundle!!.getString("station")
+        val stationName = bundle!!.getString("name")
+        val url = bundle.getString("url")
 
-        setStationImage(station.toString())
-//        val player = ExoPlayer.Builder(this).build()
-//        // Build the media item.
-//        val mediaItem: MediaItem = MediaItem.fromUri("http://stream.live.vc.bbcmedia.co.uk/bbc_radio_one")
-//        // Set the media item to be played.
-//        player.setMediaItem(mediaItem)
-//        // Prepare the player.
-//        player.prepare()
-//        // Start the playback.
-//        // Start the playback.
-////        player.play()
-
-        player = ExoPlayer.Builder(this)
-            .setMediaSourceFactory(
-                DefaultMediaSourceFactory(this).setLiveTargetOffsetMs(5000))
-            .build()
-        Log.d("honey", RadioStations.stations[station].toString())
-        // Per MediaItem settings.
-        val mediaItem: MediaItem = MediaItem.Builder()
-            .setUri(RadioStations.stations[station])
-            .setLiveConfiguration(
-                LiveConfiguration.Builder()
-                    .setMaxPlaybackSpeed(1.02f)
-                    .build())
-            .build()
-        player.setMediaItem(mediaItem)
-        player.prepare()
-//        player.play()
+        setStationImage(stationName.toString())
 
         fabPlay.setOnClickListener {
-            if (!player.isPlaying) {
-                player.play()
-            } else {
-                player.pause()
+            if (player == null) {
+                player = ExoPlayer.Builder(this)
+                    .setMediaSourceFactory(
+                        DefaultMediaSourceFactory(this).setLiveTargetOffsetMs(5000))
+                    .build()
+                Log.d("honey", url.toString())
+                // Per MediaItem settings.
+                val mediaItem: MediaItem = MediaItem.Builder()
+                    .setUri(url)
+                    .setLiveConfiguration(
+                        LiveConfiguration.Builder()
+                            .setMaxPlaybackSpeed(1.02f)
+                            .build())
+                    .build()
+                player?.setMediaItem(mediaItem)
+                player?.prepare()
+            }
+            player?.play()
+        }
+
+        fabPause.setOnClickListener {
+            if (player !== null) {
+                player?.pause()
             }
         }
 
-//        controlSound(currentSong[0])
-//        controlRadio(RadioStations.stations["Afro FM"].toString())
-
+        fabStop.setOnClickListener {
+            if (player !== null) {
+                player?.stop()
+                player?.release()
+                player = null
+            }
+        }
     }
 
     private fun setStationImage(station: String) {
         when (station) {
-            "Afro FM" -> {
+            "Afro FM 105.3" -> {
                 ivPlayer.setImageResource(R.drawable.afro_fm_01)
             }
-            "Sheger FM" -> {
+            "Sheger FM 102.1" -> {
                 ivPlayer.setImageResource(R.drawable.sheger_fm_01)
             }
-            "Ahadu FM" -> {
+            "Ahadu FM 94.3" -> {
                 ivPlayer.setImageResource(R.drawable.ahadu_fm_01)
+            }
+            "Awash FM 90.7" -> {
+                ivPlayer.setImageResource(R.drawable.awash_fm_01)
+            }
+            "Bisrat FM 101.1" -> {
+                ivPlayer.setImageResource(R.drawable.bisrat_fm_01)
+            }
+            "EBC FM Addis 97.1" -> {
+                ivPlayer.setImageResource(R.drawable.ebc_fm_addis_01)
+            }
+            "Ethio FM 107.8" -> {
+                ivPlayer.setImageResource(R.drawable.ethio_fm_01)
             }
         }
     }
@@ -145,13 +159,13 @@ class PlayerActivity : AppCompatActivity() {
     }*/
 
     private fun initialiseSeekBar() {
-        seekBar.max = mp!!.duration
+        seekBar.max = 5000
 
         val handler = Handler()
         handler.postDelayed(object: Runnable {
             override fun run() {
                 try {
-                    seekBar.progress = mp!!.currentPosition
+                    seekBar.progress = player?.currentPosition!!.toInt()
                     handler.postDelayed(this,1000)
                 } catch (e: Exception) {
                     seekBar.progress = 0
@@ -162,6 +176,6 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onBackPressed() {
         super.onBackPressed()
-        player.release()
+        player?.release()
     }
 }
