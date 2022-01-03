@@ -55,13 +55,13 @@
                 app:srcCompat="@drawable/ic_play_arrow" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/fabPause"
+                android:id="@+id/fabRecord"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="20dp"
                 android:layout_weight="1"
                 android:clickable="true"
-                app:srcCompat="@drawable/ic_pause" />
+                app:srcCompat="@drawable/ic_record" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/fabStop"

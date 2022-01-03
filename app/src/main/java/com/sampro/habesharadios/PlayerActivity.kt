@@ -19,7 +19,7 @@ class PlayerActivity : AppCompatActivity() {
     private var player: ExoPlayer? = null
 
     private lateinit var fabPlay: FloatingActionButton
-    private lateinit var fabPause: FloatingActionButton
+    private lateinit var fabRecord: FloatingActionButton
     private lateinit var fabStop: FloatingActionButton
 
     private lateinit var seekBar: SeekBar
@@ -35,7 +35,7 @@ class PlayerActivity : AppCompatActivity() {
         setContentView(R.layout.activity_player)
 
         fabPlay = findViewById(R.id.fabPlay)
-        fabPause = findViewById(R.id.fabPause)
+        fabRecord = findViewById(R.id.fabRecord)
         fabStop = findViewById(R.id.fabStop)
 
         seekBar = findViewById(R.id.seekBar)
@@ -49,6 +49,8 @@ class PlayerActivity : AppCompatActivity() {
         val url = bundle.getString("url")
 
         setStationImage(stationName.toString())
+
+        playRadio(url.toString())
 
         fabPlay.setOnClickListener {
             if (player == null) {
@@ -68,13 +70,20 @@ class PlayerActivity : AppCompatActivity() {
                 player?.setMediaItem(mediaItem)
                 player?.prepare()
             }
-            player?.play()
+            if (!player!!.isPlaying) {
+                player?.play()
+                fabPlay.setImageResource(R.drawable.ic_pause)
+            } else if (player!!.isPlaying) {
+                player?.pause()
+                fabPlay.setImageResource(R.drawable.ic_play_arrow)
+            }
         }
 
-        fabPause.setOnClickListener {
-            if (player !== null) {
-                player?.pause()
-            }
+        fabRecord.setOnClickListener {
+//            if (player !== null) {
+//                player?.pause()
+//                fabPlay.setImageResource(R.drawable.ic_play_arrow)
+//            }
         }
 
         fabStop.setOnClickListener {
@@ -82,8 +91,31 @@ class PlayerActivity : AppCompatActivity() {
                 player?.stop()
                 player?.release()
                 player = null
+                fabPlay.setImageResource(R.drawable.ic_play_arrow)
             }
         }
+    }
+
+    private fun playRadio(url: String) {
+        if (player == null) {
+            player = ExoPlayer.Builder(this)
+                .setMediaSourceFactory(
+                    DefaultMediaSourceFactory(this).setLiveTargetOffsetMs(5000))
+                .build()
+            Log.d("honey", url.toString())
+            // Per MediaItem settings.
+            val mediaItem: MediaItem = MediaItem.Builder()
+                .setUri(url)
+                .setLiveConfiguration(
+                    LiveConfiguration.Builder()
+                        .setMaxPlaybackSpeed(1.02f)
+                        .build())
+                .build()
+            player?.setMediaItem(mediaItem)
+            player?.prepare()
+        }
+        player?.play()
+        fabPlay.setImageResource(R.drawable.ic_pause)
     }
 
     private fun setStationImage(station: String) {
