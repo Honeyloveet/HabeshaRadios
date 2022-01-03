@@ -61,7 +61,8 @@
                 android:layout_margin="20dp"
                 android:layout_weight="1"
                 android:clickable="true"
-                app:srcCompat="@drawable/ic_record" />
+                app:srcCompat="@drawable/ic_record"
+                app:tint="#CF0000" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/fabStop"
