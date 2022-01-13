@@ -6,6 +6,17 @@
     android:layout_height="match_parent"
     tools:context=".PlayerActivity">
 
+    <ProgressBar
+        android:id="@+id/progressBarLoading"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:elevation="1dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/llPlayerMain" />
+
     <LinearLayout
         android:id="@+id/llPlayerMain"
         android:layout_width="wrap_content"
@@ -74,5 +85,6 @@
                 app:srcCompat="@drawable/ic_stop" />
 
         </LinearLayout>
+
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
