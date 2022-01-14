@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -24,6 +25,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        setDarkTheme()
 
         rvStations = findViewById(R.id.rvStations)
         val layoutManager = LinearLayoutManager(this)
@@ -50,6 +53,11 @@ class MainActivity : AppCompatActivity() {
 //            startActivity(intent)
 //        }
 
+    }
+
+    private fun setDarkTheme() {
+        val theme = AppCompatDelegate.MODE_NIGHT_YES
+        AppCompatDelegate.setDefaultNightMode(theme)
     }
 
     private fun createStationsList() {

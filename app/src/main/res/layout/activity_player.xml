@@ -12,10 +12,11 @@
         android:layout_width="80dp"
         android:layout_height="80dp"
         android:elevation="1dp"
+        android:indeterminateTint="#DD2626"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/llPlayerMain" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <LinearLayout
         android:id="@+id/llPlayerMain"

@@ -76,7 +76,7 @@ class PlayerActivity : AppCompatActivity() {
 
         setStationImage(stationName.toString())
 
-        progressBarLoading.visibility = View.GONE
+//        progressBarLoading.visibility = View.GONE
 
 //        playRadio(url.toString())
 
@@ -148,6 +148,7 @@ class PlayerActivity : AppCompatActivity() {
                     "Loading" -> {
                         fabPlay.setImageResource(R.drawable.ic_pause)
                         tvPlayTime.text = "Loading..."
+                        progressBarLoading.visibility = View.VISIBLE
                     }
                     "Paused" -> {
                         fabPlay.setImageResource(R.drawable.ic_play_arrow)
@@ -160,6 +161,7 @@ class PlayerActivity : AppCompatActivity() {
                     "Playing" -> {
                         fabPlay.setImageResource(R.drawable.ic_pause)
                         tvPlayTime.text = "Playing"
+                        progressBarLoading.visibility = View.GONE
                     }
                 }
             })
@@ -171,11 +173,11 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
-    private fun startPlayerService() {
+//    private fun startPlayerService() {
 //        PlayerService.newIntent(this, url).also { intent ->
 //            startService(intent)
 //        }
-    }
+//    }
 
 
     private fun bindToPlayerService() {
@@ -218,8 +220,45 @@ class PlayerActivity : AppCompatActivity() {
 
     }
 
+    private fun setStationImage(station: String) {
+        when (station) {
+            "Afro FM 105.3" -> {
+                ivPlayer.setImageResource(R.drawable.afro_fm_01)
+            }
+            "Sheger FM 102.1" -> {
+                ivPlayer.setImageResource(R.drawable.sheger_fm_01)
+            }
+            "Ahadu FM 94.3" -> {
+                ivPlayer.setImageResource(R.drawable.ahadu_fm_01)
+            }
+            "Awash FM 90.7" -> {
+                ivPlayer.setImageResource(R.drawable.awash_fm_01)
+            }
+            "Bisrat FM 101.1" -> {
+                ivPlayer.setImageResource(R.drawable.bisrat_fm_01)
+            }
+            "EBC FM Addis 97.1" -> {
+                ivPlayer.setImageResource(R.drawable.ebc_fm_addis_01)
+            }
+            "Ethio FM 107.8" -> {
+                ivPlayer.setImageResource(R.drawable.ethio_fm_01)
+            }
+            "EBC FM 104.7" -> {
+                ivPlayer.setImageResource(R.drawable.ebc_radio_fm_01)
+            }
+            else -> {
+                ivPlayer.setImageResource(R.drawable.ic_baseline_radio)
+            }
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        stopPlayerService()
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
         stopPlayerService()
     }
 
@@ -249,54 +288,6 @@ class PlayerActivity : AppCompatActivity() {
 //            override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {}
 //        })
 //    }
-
-    private fun playRadio(url: String) {
-//        if (player == null) {
-//            player = ExoPlayer.Builder(this)
-//                .setMediaSourceFactory(
-//                    DefaultMediaSourceFactory(this).setLiveTargetOffsetMs(5000))
-//                .build()
-//            // Per MediaItem settings.
-//            val mediaItem: MediaItem = MediaItem.Builder()
-//                .setUri(url)
-//                .setLiveConfiguration(
-//                    LiveConfiguration.Builder()
-//                        .setMaxPlaybackSpeed(1.02f)
-//                        .build())
-//                .build()
-//            player?.setMediaItem(mediaItem)
-//            player?.prepare()
-//            addPlayerEventListener()
-//        }
-//        player?.play()
-//        fabPlay.setImageResource(R.drawable.ic_pause)
-    }
-
-    private fun setStationImage(station: String) {
-        when (station) {
-            "Afro FM 105.3" -> {
-                ivPlayer.setImageResource(R.drawable.afro_fm_01)
-            }
-            "Sheger FM 102.1" -> {
-                ivPlayer.setImageResource(R.drawable.sheger_fm_01)
-            }
-            "Ahadu FM 94.3" -> {
-                ivPlayer.setImageResource(R.drawable.ahadu_fm_01)
-            }
-            "Awash FM 90.7" -> {
-                ivPlayer.setImageResource(R.drawable.awash_fm_01)
-            }
-            "Bisrat FM 101.1" -> {
-                ivPlayer.setImageResource(R.drawable.bisrat_fm_01)
-            }
-            "EBC FM Addis 97.1" -> {
-                ivPlayer.setImageResource(R.drawable.ebc_fm_addis_01)
-            }
-            "Ethio FM 107.8" -> {
-                ivPlayer.setImageResource(R.drawable.ethio_fm_01)
-            }
-        }
-    }
 
     /*private fun controlRadio(radioUri: String){
         fabPlay.setOnClickListener {
@@ -338,24 +329,21 @@ class PlayerActivity : AppCompatActivity() {
 
     }*/
 
-    private fun initialiseSeekBar() {
-        seekBar.max = 5000
+//    private fun initialiseSeekBar() {
+//        seekBar.max = 5000
+//
+//        val handler = Handler()
+//        handler.postDelayed(object: Runnable {
+//            override fun run() {
+//                try {
+//                    seekBar.progress = player?.currentPosition!!.toInt()
+//                    handler.postDelayed(this,1000)
+//                } catch (e: Exception) {
+//                    seekBar.progress = 0
+//                }
+//            }
+//        }, 0)
+//    }
 
-        val handler = Handler()
-        handler.postDelayed(object: Runnable {
-            override fun run() {
-                try {
-                    seekBar.progress = player?.currentPosition!!.toInt()
-                    handler.postDelayed(this,1000)
-                } catch (e: Exception) {
-                    seekBar.progress = 0
-                }
-            }
-        }, 0)
-    }
 
-    override fun onBackPressed() {
-        super.onBackPressed()
-        stopPlayerService()
-    }
 }

@@ -9,6 +9,7 @@ import android.graphics.Canvas
 import android.os.Binder
 import android.os.Bundle
 import android.os.IBinder
+import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaSessionCompat
 import androidx.annotation.DrawableRes
 import androidx.annotation.MainThread
@@ -22,14 +23,12 @@ import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
+import com.google.android.exoplayer2.ext.mediasession.TimelineQueueNavigator
 import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.ui.PlayerNotificationManager
 import com.sampro.habesharadios.PlayerActivity
 import com.sampro.habesharadios.R
-import com.sampro.habesharadios.utils.NOTIFICATION_CHANNEL_ID
-import com.sampro.habesharadios.utils.NOTIFICATION_ID
-import com.sampro.habesharadios.utils.STATION_NAME
-import com.sampro.habesharadios.utils.STATION_URL
+import com.sampro.habesharadios.utils.*
 
 class PlayerService : LifecycleService() {
 
@@ -89,11 +88,17 @@ class PlayerService : LifecycleService() {
                 }
 
                 @Nullable
-                override fun createCurrentContentIntent(player: Player): PendingIntent? = PendingIntent.getActivity(
-                    applicationContext,
-                    0,
-                    Intent(applicationContext, PlayerActivity::class.java),
-                    PendingIntent.FLAG_UPDATE_CURRENT)
+                override fun createCurrentContentIntent(player: Player): PendingIntent? {
+                    return null
+                }
+
+//                @Nullable
+//                override fun createCurrentContentIntent(player: Player): PendingIntent? = PendingIntent.getActivity(
+//                    applicationContext,
+//                    0,
+//                    Intent(applicationContext, PlayerActivity::class.java),
+//                    PendingIntent.FLAG_UPDATE_CURRENT)
+
 
                 @Nullable
                 override fun getCurrentContentText(player: Player): CharSequence? {
@@ -124,7 +129,27 @@ class PlayerService : LifecycleService() {
 
             })
             .build()
+        playerNotificationManager?.setUseStopAction(false)
+        playerNotificationManager?.setUsePlayPauseActions(false)
         playerNotificationManager!!.setPlayer(player)
+        mediaSession = MediaSessionCompat(applicationContext, MEDIA_SESSION_TAG).apply {
+            isActive = true
+        }
+        playerNotificationManager?.setMediaSessionToken(mediaSession!!.sessionToken)
+
+        mediaSessionConnector = MediaSessionConnector(mediaSession!!).apply {
+            setQueueNavigator(object : TimelineQueueNavigator(mediaSession) {
+                override fun getMediaDescription(player: Player, windowIndex: Int): MediaDescriptionCompat {
+                    val bitmap = getBitmapFromVectorDrawable(applicationContext, R.drawable.ic_baseline_radio)
+                    return MediaDescriptionCompat.Builder()
+                        .setIconBitmap(bitmap)
+                        .setTitle(stationName)
+                        .build()
+                }
+            })
+            setPlayer(player)
+        }
+
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
