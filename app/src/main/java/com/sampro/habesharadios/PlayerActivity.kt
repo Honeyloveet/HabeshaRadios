@@ -6,17 +6,21 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.*
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import android.view.View
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.SeekBar
-import android.widget.TextView
+import android.view.animation.AnimationUtils
+import android.widget.*
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.constraintlayout.widget.ConstraintLayout
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.customview.customView
 import com.google.android.exoplayer2.*
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.lang.Exception
 import java.util.*
 import com.sampro.habesharadios.mediaservices.PlayerService
+import com.sampro.habesharadios.utils.RequestPermissions
 import com.sampro.habesharadios.utils.STATION_NAME
 import com.sampro.habesharadios.utils.STATION_URL
 import com.sampro.habesharadios.utils.isServiceRunning
@@ -28,6 +32,8 @@ class PlayerActivity : AppCompatActivity() {
         private const val TAG = "RadioPlayer"
     }
 
+    private lateinit var requestPermissions: RequestPermissions
+
     private var player: ExoPlayer? = null
 
     var playerService: PlayerService? = null
@@ -37,13 +43,19 @@ class PlayerActivity : AppCompatActivity() {
     var stationName: String? = null
     var url: String? = null
 
+    private var isRecordClicked = false
+
     private lateinit var fabPlay: FloatingActionButton
     private lateinit var fabRecord: FloatingActionButton
     private lateinit var fabStop: FloatingActionButton
 
+    private lateinit var clLoading: ConstraintLayout
+    private lateinit var clRecordingStatus: ConstraintLayout
+
     private lateinit var seekBar: SeekBar
 
     private lateinit var ivPlayer: ImageView
+    private lateinit var ivRecordingStatus: ImageView
 
     private lateinit var tvPlayTime: TextView
 
@@ -51,30 +63,27 @@ class PlayerActivity : AppCompatActivity() {
 
     private var playTime = 0
 
+    private var startAnimation: Boolean = false
+    private var isRecording: Boolean = false
+
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_player)
 
-        fabPlay = findViewById(R.id.fabPlay)
-        fabRecord = findViewById(R.id.fabRecord)
-        fabStop = findViewById(R.id.fabStop)
-
-        seekBar = findViewById(R.id.seekBar)
-
-        ivPlayer = findViewById(R.id.ivPlayer)
-
-        tvPlayTime = findViewById(R.id.tvPlayTime)
-
-        progressBarLoading = findViewById(R.id.progressBarLoading)
+        setupViewControls()
 
         if (!applicationContext.isServiceRunning(PlayerService::class.java.name)) {
             val bundle : Bundle? = intent.extras
             stationName = bundle!!.getString("name")
             url = bundle.getString("url")
+        } else {
+            finish()
         }
 
         setStationImage(stationName.toString())
+
+        requestPermissions = RequestPermissions(this, this)
 
 //        progressBarLoading.visibility = View.GONE
 
@@ -96,6 +105,8 @@ class PlayerActivity : AppCompatActivity() {
 //            }
 //        }.start()
 //
+
+//        checkPermissions()
 
         fabPlay.setOnClickListener {
 
@@ -120,6 +131,35 @@ class PlayerActivity : AppCompatActivity() {
 //                player?.pause()
 //                fabPlay.setImageResource(R.drawable.ic_play_arrow)
 //            }
+//            checkPermissions()
+            val anim = AnimationUtils.loadAnimation(this, R.anim.fade_in_fade_out_color)
+
+            if (playerService!!.isPlaying() && !isRecording) {
+                playerService?.startRecording()
+                ivRecordingStatus.startAnimation(anim)
+                fabRecord.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_record_stop))
+                clRecordingStatus.visibility = View.VISIBLE
+                isRecording = true
+                startAnimation = true
+            } else if (isRecording) {
+                playerService?.stopRecording()
+                ivRecordingStatus.clearAnimation()
+                fabRecord.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_record))
+                clRecordingStatus.visibility = View.GONE
+                isRecording = false
+                startAnimation = false
+            }
+//            if (!startAnimation) {
+//                ivRecordingStatus.startAnimation(anim)
+//                fabRecord.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_record_stop))
+//                clRecordingStatus.visibility = View.VISIBLE
+//                startAnimation = true
+//            } else {
+//                ivRecordingStatus.clearAnimation()
+//                fabRecord.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_record))
+//                clRecordingStatus.visibility = View.GONE
+//                startAnimation = false
+//            }
         }
 
         fabStop.setOnClickListener {
@@ -138,6 +178,83 @@ class PlayerActivity : AppCompatActivity() {
 //        startPlayerService()
     }
 
+    private fun setupViewControls() {
+        fabPlay = findViewById(R.id.fabPlay)
+        fabRecord = findViewById(R.id.fabRecord)
+        fabStop = findViewById(R.id.fabStop)
+
+        seekBar = findViewById(R.id.seekBar)
+
+        clLoading = findViewById(R.id.clLoading)
+        clRecordingStatus = findViewById(R.id.clRecordingStatus)
+
+        ivPlayer = findViewById(R.id.ivPlayer)
+        ivRecordingStatus = findViewById(R.id.ivRecordingStatus)
+
+        tvPlayTime = findViewById(R.id.tvPlayTime)
+
+        progressBarLoading = findViewById(R.id.progressBarLoading)
+    }
+
+    private fun showPermissionDeniedDialog() {
+
+        val dialog = MaterialDialog(this)
+            .noAutoDismiss()
+            .cancelable(false)
+            .cancelOnTouchOutside(false)
+            .cornerRadius(14f)
+            .customView(R.layout.permission_denied_dialog_layout)
+
+        dialog.findViewById<Button>(R.id.btnYes).setOnClickListener {
+            dialog.dismiss()
+            checkPermissions()
+        }
+
+        dialog.findViewById<Button>(R.id.btnNo).setOnClickListener {
+            dialog.dismiss()
+//            finish()
+        }
+
+        dialog.show()
+
+    }
+
+    private fun checkPermissions() {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            if (!requestPermissions.hasWriteExternalStoragePermission() || !requestPermissions.hasRecordAudioPermission()) {
+                requestPermissions.requestPermissions()
+            }
+        } else {
+            if (!requestPermissions.hasReadExternalStoragePermission() || !requestPermissions.hasRecordAudioPermission()) {
+                requestPermissions.requestPermissions()
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            if (!requestPermissions.hasWriteExternalStoragePermission() || !requestPermissions.hasReadExternalStoragePermission()
+                || !requestPermissions.hasRecordAudioPermission()) {
+                showPermissionDeniedDialog()
+//                Toast.makeText(this, "Storage Read Write Permission Denied!", Toast.LENGTH_SHORT).show()
+                Log.i(TAG,"Storage Read Write and Record Audio Permission Denied!")
+            } else {
+                Log.i(TAG,"Storage Read Write and Record Audio Permission Accepted!")
+            }
+        } else if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
+            if (!requestPermissions.hasReadExternalStoragePermission() || !requestPermissions.hasRecordAudioPermission()) {
+//                Toast.makeText(this, "Storage Read Write Permission Denied!", Toast.LENGTH_SHORT).show()
+                showPermissionDeniedDialog()
+                Log.i(TAG,"Storage Read Write and Record Audio Permission Denied!")
+            } else {
+                Log.i(TAG,"Storage Read Write and Record Audio Permission Accepted!")
+            }
+        }
+
+    }
+
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             val binder = service as PlayerService.PlayerServiceBinder
@@ -148,7 +265,8 @@ class PlayerActivity : AppCompatActivity() {
                     "Loading" -> {
                         fabPlay.setImageResource(R.drawable.ic_pause)
                         tvPlayTime.text = "Loading..."
-                        progressBarLoading.visibility = View.VISIBLE
+//                        progressBarLoading.visibility = View.VISIBLE
+                        clLoading.visibility = View.VISIBLE
                     }
                     "Paused" -> {
                         fabPlay.setImageResource(R.drawable.ic_play_arrow)
@@ -161,7 +279,8 @@ class PlayerActivity : AppCompatActivity() {
                     "Playing" -> {
                         fabPlay.setImageResource(R.drawable.ic_pause)
                         tvPlayTime.text = "Playing"
-                        progressBarLoading.visibility = View.GONE
+//                        progressBarLoading.visibility = View.GONE
+                        clLoading.visibility = View.GONE
                     }
                 }
             })
@@ -245,6 +364,9 @@ class PlayerActivity : AppCompatActivity() {
             }
             "EBC FM 104.7" -> {
                 ivPlayer.setImageResource(R.drawable.ebc_radio_fm_01)
+            }
+            "OBN Radio" -> {
+                ivPlayer.setImageResource(R.drawable.obn_radio_01)
             }
             else -> {
                 ivPlayer.setImageResource(R.drawable.ic_baseline_radio)

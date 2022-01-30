@@ -3,9 +3,10 @@ package com.sampro.habesharadios
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.sampro.habesharadios.adapter.StationsAdapter
@@ -55,6 +56,22 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.nav_menu_main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.itemRecordings -> {
+                val intent = Intent(this, RecordingsActivity::class.java)
+                startActivity(intent)
+            }
+        }
+
+        return super.onOptionsItemSelected(item)
+    }
+
     private fun setDarkTheme() {
         val theme = AppCompatDelegate.MODE_NIGHT_YES
         AppCompatDelegate.setDefaultNightMode(theme)
@@ -67,6 +84,11 @@ class MainActivity : AppCompatActivity() {
                 url = station.value
             }
             stations.add(singleStation)
+        }
+        if (stations.isNotEmpty()) {
+            stations.sortBy {
+                it.name
+            }
         }
     }
 }

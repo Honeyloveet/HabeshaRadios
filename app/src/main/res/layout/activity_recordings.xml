@@ -4,10 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".RecordingsActivity">
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvStations"
+        android:id="@+id/rvRecordings"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginStart="5dp"
@@ -18,6 +18,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:listitem="@layout/radio_list_layout"/>
+        tools:listitem="@layout/recordings_list_layout" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -6,14 +6,18 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.icu.text.SimpleDateFormat
+import android.media.MediaRecorder
 import android.os.Binder
 import android.os.Bundle
 import android.os.IBinder
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaSessionCompat
+import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.annotation.MainThread
 import androidx.annotation.Nullable
+import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.lifecycle.LifecycleService
@@ -29,18 +33,27 @@ import com.google.android.exoplayer2.ui.PlayerNotificationManager
 import com.sampro.habesharadios.PlayerActivity
 import com.sampro.habesharadios.R
 import com.sampro.habesharadios.utils.*
+import java.io.File
+import java.io.IOException
+import java.util.*
 
 class PlayerService : LifecycleService() {
 
 //    private val mBinder: IBinder = PlayerServiceBinder()
     var player: ExoPlayer? = null
 
+    var recorder: MediaRecorder? = null
+
+    private var fileRecordName: String = ""
+
     private var stationUrl: String? = null
     private var stationName = "Station Name"
+    private var actions = mutableListOf("EXIT","CLOSE")
 
     private var playerNotificationManager: PlayerNotificationManager? = null
     private var mediaSession: MediaSessionCompat? = null
     private var mediaSessionConnector: MediaSessionConnector? = null
+    private var customActionReceiver: PlayerNotificationManager.CustomActionReceiver? = null
 
     private val _playerStatusLiveData = MutableLiveData<PlayerStatus>()
     val playerStatusLiveData: LiveData<PlayerStatus>
@@ -77,6 +90,39 @@ class PlayerService : LifecycleService() {
             .build()
         player!!.addListener(PlayerEventListener())
 
+        customActionReceiver = object : PlayerNotificationManager.CustomActionReceiver {
+            override fun createCustomActions(context: Context, instanceId: Int): MutableMap<String, NotificationCompat.Action> {
+                val exitAction = Intent()
+                exitAction.putExtra("action", actions[0])
+                val closeAction = Intent()
+                closeAction.putExtra("action", actions[1])
+                return mutableMapOf(
+                    Pair(actions[0], NotificationCompat.Action(R.drawable.ic_record, "Exit",
+                        PendingIntent.getBroadcast(context, 0, Intent(exitAction).setPackage(context.packageName), PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE))),
+                    Pair(actions[1], NotificationCompat.Action(R.drawable.ic_record_stop, "Close",
+                        PendingIntent.getBroadcast(context, 0, Intent(exitAction).setPackage(context.packageName), PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)))
+                )
+            }
+
+            override fun getCustomActions(player: Player): MutableList<String> {
+                return actions
+            }
+
+            override fun onCustomAction(player: Player, action: String, intent: Intent) {
+                Log.i("SAMUEL","Clicked First $action")
+                when (action) {
+                    "EXIT" -> {
+                        Log.i("SAMUEL","Clicked Second $action")
+//                            stopSelf()
+                    }
+                    "CLOSE" -> {
+                        Log.i("SAMUEL","Clicked Second $action")
+                    }
+                }
+            }
+
+        }
+
         playerNotificationManager = PlayerNotificationManager.Builder(
             applicationContext,
             NOTIFICATION_ID,
@@ -87,9 +133,15 @@ class PlayerService : LifecycleService() {
                     return stationName
                 }
 
+//                @Nullable
+//                override fun createCurrentContentIntent(player: Player): PendingIntent? {
+//                    return null
+//                }
+
                 @Nullable
                 override fun createCurrentContentIntent(player: Player): PendingIntent? {
-                    return null
+                    val intent = Intent(this@PlayerService, PlayerActivity::class.java)
+                    return PendingIntent.getActivity(this@PlayerService,0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
                 }
 
 //                @Nullable
@@ -111,6 +163,7 @@ class PlayerService : LifecycleService() {
                 }
 
             })
+//            .setCustomActionReceiver(customActionReceiver as PlayerNotificationManager.CustomActionReceiver)
             .setNotificationListener( object : PlayerNotificationManager.NotificationListener {
 
                 override fun onNotificationPosted(notificationId: Int, notification: Notification, ongoing: Boolean) {
@@ -130,7 +183,7 @@ class PlayerService : LifecycleService() {
             })
             .build()
         playerNotificationManager?.setUseStopAction(false)
-        playerNotificationManager?.setUsePlayPauseActions(false)
+        playerNotificationManager?.setUsePlayPauseActions(true)
         playerNotificationManager!!.setPlayer(player)
         mediaSession = MediaSessionCompat(applicationContext, MEDIA_SESSION_TAG).apply {
             isActive = true
@@ -147,6 +200,7 @@ class PlayerService : LifecycleService() {
                         .build()
                 }
             })
+            
             setPlayer(player)
         }
 
@@ -208,6 +262,37 @@ class PlayerService : LifecycleService() {
         return player?.isPlaying == true
     }
 
+    fun startRecording() {
+        val audioCaptureDirectory = File(getExternalFilesDir(null), "/Recordings")
+        if (!audioCaptureDirectory.exists()) {
+            audioCaptureDirectory.mkdirs()
+        }
+        val timestamp = SimpleDateFormat("dd-MM-yyyy-hh-mm-ss", Locale.US).format(Date())
+        fileRecordName = "$stationName-$timestamp.3gp"
+        val outPutFile = "${audioCaptureDirectory.absolutePath}/$fileRecordName"
+        recorder = MediaRecorder().apply {
+            setAudioSource(MediaRecorder.AudioSource.MIC)
+            setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+            setOutputFile(outPutFile)
+            setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+
+            try {
+                prepare()
+            } catch (e: IOException) {
+                Log.e("RECORDER", "prepare() failed")
+            }
+            start()
+        }
+    }
+
+    fun stopRecording() {
+        recorder?.apply {
+            stop()
+            release()
+        }
+        recorder = null
+    }
+
     @MainThread
     private fun getBitmapFromVectorDrawable(context: Context, @DrawableRes drawableId: Int): Bitmap? {
         return ContextCompat.getDrawable(context, drawableId)?.let {
@@ -229,6 +314,15 @@ class PlayerService : LifecycleService() {
             }
         }
 
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            super.onIsPlayingChanged(isPlaying)
+            if (isPlaying) {
+                _playerStatusLiveData.value = PlayerStatus.Playing("Playing")
+            } else if (!isPlaying) {
+                _playerStatusLiveData.value = PlayerStatus.Paused("Paused")
+            }
+        }
+
         override fun onPlaybackStateChanged(playbackState: Int) {
             if (playbackState == Player.STATE_READY) {
                 if (!player!!.playWhenReady) {
@@ -236,6 +330,13 @@ class PlayerService : LifecycleService() {
                 }
             } else if (playbackState == Player.STATE_ENDED) {
                 _playerStatusLiveData.value = PlayerStatus.Ended("Ended")
+            }
+            if (playbackState == Player.COMMAND_PLAY_PAUSE) {
+                if (!player!!.isPlaying) {
+                    _playerStatusLiveData.value = PlayerStatus.Paused("Paused")
+                } else if (player!!.isPlaying) {
+                    _playerStatusLiveData.value = PlayerStatus.Playing("Playing")
+                }
             }
             if (playbackState == Player.STATE_BUFFERING) {
                 _playerStatusLiveData.value = PlayerStatus.Loading("Loading")

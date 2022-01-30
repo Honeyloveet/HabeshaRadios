@@ -6,17 +6,82 @@
     android:layout_height="match_parent"
     tools:context=".PlayerActivity">
 
-    <ProgressBar
-        android:id="@+id/progressBarLoading"
-        style="?android:attr/progressBarStyle"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/clLoading"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
         android:elevation="1dp"
-        android:indeterminateTint="#DD2626"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="gone">
+
+        <ProgressBar
+            android:id="@+id/progressBarLoading"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:elevation="1dp"
+            android:indeterminateTint="#DD2626"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Loading..."
+            android:textColor="@color/white"
+            android:textSize="25sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/progressBarLoading" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/clRecordingStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="20dp"
+        android:elevation="1dp"
+        android:visibility="gone"
+        android:paddingStart="10dp"
+        android:paddingBottom="5dp"
+        android:paddingTop="5dp"
+        android:paddingEnd="5dp"
+        android:background="@drawable/custom_recording_status_background"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/ivRecordingStatus"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_record" />
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:gravity="center"
+            android:text="Recording"
+            android:textColor="@color/white_d5"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/ivRecordingStatus"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
         android:id="@+id/llPlayerMain"
@@ -48,7 +113,8 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:layout_marginBottom="10dp"
-            android:text="0" />
+            android:textColor="@color/white_d5"
+            android:text="Loading..." />
 
         <LinearLayout
             android:id="@+id/llPlayerControls"
@@ -64,7 +130,8 @@
                 android:layout_margin="20dp"
                 android:layout_weight="1"
                 android:clickable="true"
-                app:srcCompat="@drawable/ic_play_arrow" />
+                app:srcCompat="@drawable/ic_play_arrow"
+                tools:ignore="SpeakableTextPresentCheck" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/fabRecord"
@@ -74,7 +141,8 @@
                 android:layout_weight="1"
                 android:clickable="true"
                 app:srcCompat="@drawable/ic_record"
-                app:tint="#CF0000" />
+                app:tint="#CF0000"
+                tools:ignore="SpeakableTextPresentCheck" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/fabStop"
@@ -83,7 +151,8 @@
                 android:layout_margin="20dp"
                 android:layout_weight="1"
                 android:clickable="true"
-                app:srcCompat="@drawable/ic_stop" />
+                app:srcCompat="@drawable/ic_stop"
+                tools:ignore="SpeakableTextPresentCheck" />
 
         </LinearLayout>
 
