@@ -6,4 +6,7 @@
     <string name="dialog_app_logo">dialog app logo</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+
+    <string name="loading_dots">…</string>
+
 </resources>

@@ -20,10 +20,17 @@
         android:theme="@style/Theme.HabeshaRadios"
         android:usesCleartextTraffic="true">
         <activity
-            android:name=".RecordingsActivity"
-            android:exported="false" />
+            android:name=".RecordingsPlayerActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            tools:ignore="LockedOrientationActivity" />
         <activity
-            android:name=".PlayerActivity"
+            android:name=".RecordingsActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            tools:ignore="LockedOrientationActivity" />
+        <activity
+            android:name=".RadioPlayerActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             tools:ignore="LockedOrientationActivity" />
@@ -39,7 +46,7 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".mediaservices.PlayerService" />
+        <service android:name=".mediaservices.RadioPlayerService" />
     </application>
 
 </manifest>

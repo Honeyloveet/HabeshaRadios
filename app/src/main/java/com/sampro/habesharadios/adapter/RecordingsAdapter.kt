@@ -18,6 +18,7 @@ class RecordingsAdapter(val context: Context, private val recordingsList: List<P
 
     interface OnItemClickListener{
         fun onItemClick(position: Int)
+        fun onImgDeleteClick(position: Int)
     }
 
     fun setOnItemClickListener(listener: OnItemClickListener) {
@@ -39,10 +40,10 @@ class RecordingsAdapter(val context: Context, private val recordingsList: List<P
         holder.tvNumber.text = (position + 1).toString()
         holder.tvRecording.text = item.first.name
 
-        holder.imageBtnDelete.setOnClickListener {
-//            Toast.makeText(context, "${position + 1} ${item.first.name}", Toast.LENGTH_SHORT).show()
-            Log.d("Files", "${item.first.name} Delete Button Clicked!!.")
-        }
+//        holder.imageBtnDelete.setOnClickListener {
+////            Toast.makeText(context, "${position + 1} ${item.first.name}", Toast.LENGTH_SHORT).show()
+//            Log.d("Files", "${item.first.name} Delete Button Clicked!!.")
+//        }
     }
 
     override fun getItemCount(): Int {
@@ -52,11 +53,14 @@ class RecordingsAdapter(val context: Context, private val recordingsList: List<P
     class ViewHolder(view: View, listener: OnItemClickListener) : RecyclerView.ViewHolder(view) {
         val tvNumber: TextView = view.findViewById(R.id.tvNumber)
         val tvRecording: TextView = view.findViewById(R.id.tvRecording)
-        val imageBtnDelete: ImageButton = view.findViewById(R.id.imageBtnDelete)
+        private val imageBtnDelete: ImageButton = view.findViewById(R.id.imageBtnDelete)
 
         init {
             view.setOnClickListener {
                 listener.onItemClick(absoluteAdapterPosition)
+            }
+            imageBtnDelete.setOnClickListener {
+                listener.onImgDeleteClick(absoluteAdapterPosition)
             }
         }
     }

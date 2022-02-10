@@ -17,16 +17,15 @@ import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.customview.customView
 import com.google.android.exoplayer2.*
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import java.lang.Exception
 import java.util.*
-import com.sampro.habesharadios.mediaservices.PlayerService
+import com.sampro.habesharadios.mediaservices.RadioPlayerService
 import com.sampro.habesharadios.utils.RequestPermissions
 import com.sampro.habesharadios.utils.STATION_NAME
 import com.sampro.habesharadios.utils.STATION_URL
 import com.sampro.habesharadios.utils.isServiceRunning
 
 
-class PlayerActivity : AppCompatActivity() {
+class RadioPlayerActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "RadioPlayer"
@@ -36,11 +35,11 @@ class PlayerActivity : AppCompatActivity() {
 
     private var player: ExoPlayer? = null
 
-    var playerService: PlayerService? = null
+    var radioPlayerService: RadioPlayerService? = null
 
     var pIsBound: Boolean? = null
 
-    var stationName: String? = null
+    var stationName: String = "Habesha Radios"
     var url: String? = null
 
     private var isRecordClicked = false
@@ -69,19 +68,26 @@ class PlayerActivity : AppCompatActivity() {
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_player)
+        setContentView(R.layout.activity_radio_player)
+
+        supportActionBar?.apply {
+            setDisplayHomeAsUpEnabled(true)
+            setDisplayShowHomeEnabled(true)
+        }
 
         setupViewControls()
 
-        if (!applicationContext.isServiceRunning(PlayerService::class.java.name)) {
+        if (!applicationContext.isServiceRunning(RadioPlayerService::class.java.name)) {
             val bundle : Bundle? = intent.extras
-            stationName = bundle!!.getString("name")
+            stationName = bundle!!.getString("name").toString()
             url = bundle.getString("url")
         } else {
             finish()
         }
 
-        setStationImage(stationName.toString())
+        supportActionBar?.title = stationName
+
+        setStationImage(stationName)
 
         requestPermissions = RequestPermissions(this, this)
 
@@ -110,15 +116,15 @@ class PlayerActivity : AppCompatActivity() {
 
         fabPlay.setOnClickListener {
 
-            if (playerService == null) {
+            if (radioPlayerService == null) {
                 bindToPlayerService()
             } else {
-                if (playerService!!.isPlaying()) {
-                    playerService?.pause()
+                if (radioPlayerService!!.isPlaying()) {
+                    radioPlayerService?.pause()
                     fabPlay.setImageResource(R.drawable.ic_play_arrow)
                     tvPlayTime.text = "Paused"
-                } else if (!playerService!!.isPlaying()) {
-                    playerService?.resume()
+                } else if (!radioPlayerService!!.isPlaying()) {
+                    radioPlayerService?.resume()
                     fabPlay.setImageResource(R.drawable.ic_pause)
                     tvPlayTime.text = "Playing"
                 }
@@ -134,15 +140,15 @@ class PlayerActivity : AppCompatActivity() {
 //            checkPermissions()
             val anim = AnimationUtils.loadAnimation(this, R.anim.fade_in_fade_out_color)
 
-            if (playerService!!.isPlaying() && !isRecording) {
-                playerService?.startRecording()
+            if (radioPlayerService!!.isPlaying() && !isRecording) {
+                radioPlayerService?.startRecording()
                 ivRecordingStatus.startAnimation(anim)
                 fabRecord.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_record_stop))
                 clRecordingStatus.visibility = View.VISIBLE
                 isRecording = true
                 startAnimation = true
             } else if (isRecording) {
-                playerService?.stopRecording()
+                radioPlayerService?.stopRecording()
                 ivRecordingStatus.clearAnimation()
                 fabRecord.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_record))
                 clRecordingStatus.visibility = View.GONE
@@ -170,6 +176,14 @@ class PlayerActivity : AppCompatActivity() {
 //                fabPlay.setImageResource(R.drawable.ic_play_arrow)
 //                tvPlayTime.text = "Stopped."
 //            }
+            if (isRecording) {
+                radioPlayerService?.stopRecording()
+                ivRecordingStatus.clearAnimation()
+                fabRecord.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_record))
+                clRecordingStatus.visibility = View.GONE
+                isRecording = false
+                startAnimation = false
+            }
             stopPlayerService()
             fabPlay.setImageResource(R.drawable.ic_play_arrow)
             tvPlayTime.text = "Stopped."
@@ -256,11 +270,12 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private val serviceConnection = object : ServiceConnection {
+        @SuppressLint("SetTextI18n")
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            val binder = service as PlayerService.PlayerServiceBinder
-            playerService = binder.service
+            val binder = service as RadioPlayerService.PlayerServiceBinder
+            radioPlayerService = binder.service
             pIsBound = true
-            playerService?.playerStatusLiveData?.observe(this@PlayerActivity, {
+            radioPlayerService?.playerStatusLiveData?.observe(this@RadioPlayerActivity) {
                 when (it.playerStatus) {
                     "Loading" -> {
                         fabPlay.setImageResource(R.drawable.ic_pause)
@@ -283,29 +298,29 @@ class PlayerActivity : AppCompatActivity() {
                         clLoading.visibility = View.GONE
                     }
                 }
-            })
+            }
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
             pIsBound = false
-            playerService = null
+            radioPlayerService = null
         }
     }
 
 //    private fun startPlayerService() {
-//        PlayerService.newIntent(this, url).also { intent ->
+//        RadioPlayerService.newIntent(this, url).also { intent ->
 //            startService(intent)
 //        }
 //    }
 
 
     private fun bindToPlayerService() {
-        if (playerService == null) {
-            val intent = Intent(this, PlayerService::class.java)
+        if (radioPlayerService == null) {
+            val intent = Intent(this, RadioPlayerService::class.java)
             intent.putExtra(STATION_URL, url)
             intent.putExtra(STATION_NAME, stationName)
             bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
-//            PlayerService.newIntent(this).also { intent ->
+//            RadioPlayerService.newIntent(this).also { intent ->
 //                bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
 //            }
             startService(intent)
@@ -313,27 +328,27 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun unbindPlayerService() {
-        if (playerService != null) {
+        if (radioPlayerService != null) {
             unbindService(serviceConnection)
 
-            playerService = null
+            radioPlayerService = null
         }
     }
 
     private fun stopPlayerService() {
-//        playerService?.pause()
-
+//        radioPlayerService?.pause()
+        radioPlayerService?.stopRecording()
         unbindPlayerService()
-        stopService(Intent(this, PlayerService::class.java))
+        stopService(Intent(this, RadioPlayerService::class.java))
 
-        playerService = null
+        radioPlayerService = null
     }
 
 
     override fun onStart() {
         super.onStart()
 
-        if (!applicationContext.isServiceRunning(PlayerService::class.java.name)) {
+        if (!applicationContext.isServiceRunning(RadioPlayerService::class.java.name)) {
             bindToPlayerService()
         }
 
@@ -384,6 +399,11 @@ class PlayerActivity : AppCompatActivity() {
         stopPlayerService()
     }
 
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressed()
+        return super.onSupportNavigateUp()
+    }
+
 //    private fun addPlayerEventListener() {
 //        player!!.addListener(object : Player.Listener {
 //            override fun onTimelineChanged(timeline: Timeline, reason: Int) {}
@@ -415,17 +435,17 @@ class PlayerActivity : AppCompatActivity() {
         fabPlay.setOnClickListener {
             if (mp == null){
                 mp = MediaPlayer.create(this, Uri.parse("http://stream.live.vc.bbcmedia.co.uk/bbc_radio_one"))
-//                Log.d("PlayerActivity", "ID: ${mp!!.audioSessionId}")
+//                Log.d("RadioPlayerActivity", "ID: ${mp!!.audioSessionId}")
 
 //                initialiseSeekBar()
             }
             mp?.start()
-//            Log.d("PlayerActivity", "Duration: ${mp!!.duration/1000} seconds")
+//            Log.d("RadioPlayerActivity", "Duration: ${mp!!.duration/1000} seconds")
         }
 
         fabPause.setOnClickListener {
             if (mp !== null) mp?.pause()
-//            Log.d("PlayerActivity", "Paused at: ${mp!!.currentPosition/1000} seconds")
+//            Log.d("RadioPlayerActivity", "Paused at: ${mp!!.currentPosition/1000} seconds")
         }
 
         fabStop.setOnClickListener {

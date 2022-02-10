@@ -7,6 +7,7 @@
         <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/drawable/custom_recording_status_background.xml" value="0.2755208333333333" />
         <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/drawable/ic_baseline_radio.xml" value="0.2755208333333333" />
         <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/drawable/ic_delete.xml" value="0.2755208333333333" />
+        <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/drawable/ic_delete_2.xml" value="0.2755208333333333" />
         <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/drawable/ic_folder.xml" value="0.2755208333333333" />
         <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/drawable/ic_launcher_background.xml" value="0.15104166666666666" />
         <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/drawable/ic_pause.xml" value="0.2755208333333333" />
@@ -14,12 +15,22 @@
         <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/drawable/ic_record.xml" value="0.2755208333333333" />
         <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/drawable/ic_record_stop.xml" value="0.2755208333333333" />
         <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/drawable/ic_stop.xml" value="0.2755208333333333" />
+        <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/drawable/ic_warning.xml" value="0.2755208333333333" />
+        <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/drawable/vd_pause_circle_outline.xml" value="0.192" />
+        <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/drawable/vd_play_circle_outline.xml" value="0.192" />
+        <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/drawable/vd_replay_30.xml" value="0.192" />
         <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/layout/activity_afro_fm.xml" value="0.259375" />
         <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/layout/activity_main.xml" value="0.2453125" />
         <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/layout/activity_player.xml" value="0.259375" />
+        <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/layout/activity_radio_player.xml" value="0.259375" />
         <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/layout/activity_recordings.xml" value="0.2453125" />
+        <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/layout/activity_recordings_player.xml" value="0.259375" />
+        <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/layout/audio_controller_view.xml" value="0.264" />
+        <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/layout/audio_player_view.xml" value="0.259375" />
+        <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/layout/file_delete_confermation_dialog_layout.xml" value="0.259375" />
         <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/layout/permission_denied_dialog_layout.xml" value="0.259375" />
         <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/layout/radio_list_layout.xml" value="0.259375" />
+        <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/layout/recordings_controller_view.xml" value="0.259375" />
         <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/layout/recordings_list_layout.xml" value="0.259375" />
         <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/menu/nav_menu_main.xml" value="0.259375" />
         <entry key="..\:/Users/Sam/AndroidStudioProjects/HabeshaRadios/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.15104166666666666" />

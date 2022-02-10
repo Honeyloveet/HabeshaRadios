@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -40,7 +39,7 @@ class MainActivity : AppCompatActivity() {
 
         adapter.setOnItemClickListener(object : StationsAdapter.OnItemClickListener{
             override fun onItemClick(position: Int) {
-                val intent = Intent(this@MainActivity, PlayerActivity::class.java)
+                val intent = Intent(this@MainActivity, RadioPlayerActivity::class.java)
                 intent.putExtra("name", stations[position].name)
                 intent.putExtra("url", stations[position].url)
 
@@ -49,7 +48,7 @@ class MainActivity : AppCompatActivity() {
 
         })
 //        cvAhaduFM.setOnClickListener {
-//            val intent = Intent(this@MainActivity, PlayerActivity::class.java)
+//            val intent = Intent(this@MainActivity, RadioPlayerActivity::class.java)
 //            intent.putExtra("station","Ahadu FM")
 //            startActivity(intent)
 //        }

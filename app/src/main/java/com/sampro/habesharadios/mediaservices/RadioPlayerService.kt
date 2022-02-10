@@ -30,14 +30,14 @@ import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ext.mediasession.TimelineQueueNavigator
 import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.ui.PlayerNotificationManager
-import com.sampro.habesharadios.PlayerActivity
+import com.sampro.habesharadios.RadioPlayerActivity
 import com.sampro.habesharadios.R
 import com.sampro.habesharadios.utils.*
 import java.io.File
 import java.io.IOException
 import java.util.*
 
-class PlayerService : LifecycleService() {
+class RadioPlayerService : LifecycleService() {
 
 //    private val mBinder: IBinder = PlayerServiceBinder()
     var player: ExoPlayer? = null
@@ -62,13 +62,13 @@ class PlayerService : LifecycleService() {
 
     inner class PlayerServiceBinder : Binder() {
         val service
-            get() = this@PlayerService
+            get() = this@RadioPlayerService
     }
 
 //    companion object {
 //
 //        @MainThread
-//        fun newIntent(context: Context, url: String? = null) = Intent(context, PlayerService::class.java).apply {
+//        fun newIntent(context: Context, url: String? = null) = Intent(context, RadioPlayerService::class.java).apply {
 //                putExtra(STATION_URL, url)
 //        }
 //
@@ -140,15 +140,15 @@ class PlayerService : LifecycleService() {
 
                 @Nullable
                 override fun createCurrentContentIntent(player: Player): PendingIntent? {
-                    val intent = Intent(this@PlayerService, PlayerActivity::class.java)
-                    return PendingIntent.getActivity(this@PlayerService,0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+                    val intent = Intent(this@RadioPlayerService, RadioPlayerActivity::class.java)
+                    return PendingIntent.getActivity(this@RadioPlayerService,0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
                 }
 
 //                @Nullable
 //                override fun createCurrentContentIntent(player: Player): PendingIntent? = PendingIntent.getActivity(
 //                    applicationContext,
 //                    0,
-//                    Intent(applicationContext, PlayerActivity::class.java),
+//                    Intent(applicationContext, RadioPlayerActivity::class.java),
 //                    PendingIntent.FLAG_UPDATE_CURRENT)
 
 
@@ -216,6 +216,7 @@ class PlayerService : LifecycleService() {
     override fun onDestroy() {
         playerNotificationManager?.setPlayer(null)
         player?.release()
+        stopRecording()
 
         super.onDestroy()
     }
@@ -268,7 +269,7 @@ class PlayerService : LifecycleService() {
             audioCaptureDirectory.mkdirs()
         }
         val timestamp = SimpleDateFormat("dd-MM-yyyy-hh-mm-ss", Locale.US).format(Date())
-        fileRecordName = "$stationName-$timestamp.3gp"
+        fileRecordName = "$stationName- $timestamp.aac"
         val outPutFile = "${audioCaptureDirectory.absolutePath}/$fileRecordName"
         recorder = MediaRecorder().apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
