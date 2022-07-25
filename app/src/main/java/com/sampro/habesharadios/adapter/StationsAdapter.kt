@@ -62,6 +62,9 @@ class StationsAdapter(val context: Context, private var stationsList: MutableLis
             }
             "OBN Radio" -> {
                 holder.ivStationLogo.setImageResource(R.drawable.obn_radio_01)
+            }
+            "EBC National Radio" -> {
+                holder.ivStationLogo.setImageResource(R.drawable.ebc_national_radio_01)
             } else -> {
                 holder.ivStationLogo.setImageResource(R.drawable.ic_baseline_radio)
             }

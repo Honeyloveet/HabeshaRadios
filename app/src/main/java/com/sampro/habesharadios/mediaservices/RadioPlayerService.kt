@@ -11,6 +11,7 @@ import android.media.MediaRecorder
 import android.os.Binder
 import android.os.Bundle
 import android.os.IBinder
+import android.os.ResultReceiver
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.util.Log
@@ -23,6 +24,7 @@ import androidx.core.graphics.drawable.DrawableCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.afollestad.materialdialogs.utils.MDUtil.getStringArray
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
@@ -48,7 +50,8 @@ class RadioPlayerService : LifecycleService() {
 
     private var stationUrl: String? = null
     private var stationName = "Station Name"
-    private var actions = mutableListOf("EXIT","CLOSE")
+//    private var actions = mutableListOf("EXIT","CLOSE")
+    private var actions = mutableListOf("EXIT")
 
     private var playerNotificationManager: PlayerNotificationManager? = null
     private var mediaSession: MediaSessionCompat? = null
@@ -94,13 +97,13 @@ class RadioPlayerService : LifecycleService() {
             override fun createCustomActions(context: Context, instanceId: Int): MutableMap<String, NotificationCompat.Action> {
                 val exitAction = Intent()
                 exitAction.putExtra("action", actions[0])
-                val closeAction = Intent()
-                closeAction.putExtra("action", actions[1])
+//                val closeAction = Intent()
+//                closeAction.putExtra("action", actions[1])
                 return mutableMapOf(
                     Pair(actions[0], NotificationCompat.Action(R.drawable.ic_record, "Exit",
-                        PendingIntent.getBroadcast(context, 0, Intent(exitAction).setPackage(context.packageName), PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE))),
-                    Pair(actions[1], NotificationCompat.Action(R.drawable.ic_record_stop, "Close",
-                        PendingIntent.getBroadcast(context, 0, Intent(exitAction).setPackage(context.packageName), PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)))
+                        PendingIntent.getBroadcast(context, instanceId, Intent(exitAction).setPackage(context.packageName), PendingIntent.FLAG_CANCEL_CURRENT))),
+//                    Pair(actions[1], NotificationCompat.Action(R.drawable.ic_record_stop, "Close",
+//                        PendingIntent.getBroadcast(context, instanceId, Intent(exitAction).setPackage(context.packageName), PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)))
                 )
             }
 
@@ -109,14 +112,15 @@ class RadioPlayerService : LifecycleService() {
             }
 
             override fun onCustomAction(player: Player, action: String, intent: Intent) {
-                Log.i("SAMUEL","Clicked First $action")
+                val x = intent.action
+                Log.i("HONEY","Clicked First $x")
                 when (action) {
                     "EXIT" -> {
-                        Log.i("SAMUEL","Clicked Second $action")
+                        Log.i("HONEY","Clicked Second $action")
 //                            stopSelf()
                     }
                     "CLOSE" -> {
-                        Log.i("SAMUEL","Clicked Second $action")
+                        Log.i("HONEY","Clicked Second $action")
                     }
                 }
             }
@@ -128,6 +132,7 @@ class RadioPlayerService : LifecycleService() {
             NOTIFICATION_ID,
             NOTIFICATION_CHANNEL_ID)
             .setChannelNameResourceId(R.string.playback_channel_name)
+            .setCustomActionReceiver(customActionReceiver as PlayerNotificationManager.CustomActionReceiver)
             .setMediaDescriptionAdapter(object : PlayerNotificationManager.MediaDescriptionAdapter {
                 override fun getCurrentContentTitle(player: Player): CharSequence {
                     return stationName
@@ -163,7 +168,6 @@ class RadioPlayerService : LifecycleService() {
                 }
 
             })
-//            .setCustomActionReceiver(customActionReceiver as PlayerNotificationManager.CustomActionReceiver)
             .setNotificationListener( object : PlayerNotificationManager.NotificationListener {
 
                 override fun onNotificationPosted(notificationId: Int, notification: Notification, ongoing: Boolean) {
@@ -176,20 +180,29 @@ class RadioPlayerService : LifecycleService() {
 
                 override fun onNotificationCancelled(notificationId: Int, dismissedByUser: Boolean) {
                     _playerStatusLiveData.value = PlayerStatus.Cancelled("Canceled")
+                    Log.i("HONEY","Notification Cancelled.")
 
                     stopSelf()
                 }
 
             })
             .build()
-        playerNotificationManager?.setUseStopAction(false)
         playerNotificationManager?.setUsePlayPauseActions(true)
+        playerNotificationManager?.setUseStopAction(false)
+        playerNotificationManager?.setUsePreviousAction(false)
+        playerNotificationManager?.setUsePreviousActionInCompactView(false)
+        playerNotificationManager?.setUseNextAction(false)
+        playerNotificationManager?.setUseNextActionInCompactView(false)
+        playerNotificationManager?.setUseFastForwardAction(false)
+        playerNotificationManager?.setUseFastForwardActionInCompactView(false)
+        playerNotificationManager?.setUseRewindAction(false)
+        playerNotificationManager?.setUseRewindActionInCompactView(false)
+        playerNotificationManager?.setUseChronometer(true)
         playerNotificationManager!!.setPlayer(player)
         mediaSession = MediaSessionCompat(applicationContext, MEDIA_SESSION_TAG).apply {
             isActive = true
         }
         playerNotificationManager?.setMediaSessionToken(mediaSession!!.sessionToken)
-
         mediaSessionConnector = MediaSessionConnector(mediaSession!!).apply {
             setQueueNavigator(object : TimelineQueueNavigator(mediaSession) {
                 override fun getMediaDescription(player: Player, windowIndex: Int): MediaDescriptionCompat {
@@ -214,10 +227,12 @@ class RadioPlayerService : LifecycleService() {
     }
 
     override fun onDestroy() {
-        playerNotificationManager?.setPlayer(null)
-        player?.release()
         stopRecording()
+        playerNotificationManager?.setPlayer(null)
+        player?.stop()
+        player?.release()
 
+        stopForeground(true)
         super.onDestroy()
     }
 
@@ -316,10 +331,9 @@ class RadioPlayerService : LifecycleService() {
         }
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
-            super.onIsPlayingChanged(isPlaying)
             if (isPlaying) {
                 _playerStatusLiveData.value = PlayerStatus.Playing("Playing")
-            } else if (!isPlaying) {
+            } else if (!isPlaying && player?.playWhenReady == false) {
                 _playerStatusLiveData.value = PlayerStatus.Paused("Paused")
             }
         }
@@ -332,13 +346,13 @@ class RadioPlayerService : LifecycleService() {
             } else if (playbackState == Player.STATE_ENDED) {
                 _playerStatusLiveData.value = PlayerStatus.Ended("Ended")
             }
-            if (playbackState == Player.COMMAND_PLAY_PAUSE) {
-                if (!player!!.isPlaying) {
-                    _playerStatusLiveData.value = PlayerStatus.Paused("Paused")
-                } else if (player!!.isPlaying) {
-                    _playerStatusLiveData.value = PlayerStatus.Playing("Playing")
-                }
-            }
+//            if (playbackState == Player.COMMAND_PLAY_PAUSE) {
+//                if (!player!!.isPlaying) {
+//                    _playerStatusLiveData.value = PlayerStatus.Paused("Paused")
+//                } else if (player!!.isPlaying) {
+//                    _playerStatusLiveData.value = PlayerStatus.Playing("Playing")
+//                }
+//            }
             if (playbackState == Player.STATE_BUFFERING) {
                 _playerStatusLiveData.value = PlayerStatus.Loading("Loading")
             } else if (player!!.isPlaying) {

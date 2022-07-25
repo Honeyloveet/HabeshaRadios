@@ -87,6 +87,9 @@ class RecordingsPlayerActivity : AppCompatActivity(), Player.Listener {
             "OBN Radio" -> {
                 x = ResourcesCompat.getDrawable(resources, R.drawable.obn_radio_01, null)
             }
+            "EBC National Radio" -> {
+                x = ResourcesCompat.getDrawable(resources, R.drawable.ebc_national_radio_01, null)
+            }
             else -> x =  ResourcesCompat.getDrawable(resources, R.drawable.ic_baseline_radio, null)
 
         }

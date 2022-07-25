@@ -7,28 +7,32 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.*
 import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
 import android.view.View
 import android.view.animation.AnimationUtils
 import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.customview.customView
+import com.google.android.ads.nativetemplates.NativeTemplateStyle
+import com.google.android.ads.nativetemplates.TemplateView
 import com.google.android.exoplayer2.*
+import com.google.android.gms.ads.*
+import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import java.util.*
 import com.sampro.habesharadios.mediaservices.RadioPlayerService
 import com.sampro.habesharadios.utils.RequestPermissions
 import com.sampro.habesharadios.utils.STATION_NAME
 import com.sampro.habesharadios.utils.STATION_URL
 import com.sampro.habesharadios.utils.isServiceRunning
+import java.util.*
 
 
 class RadioPlayerActivity : AppCompatActivity() {
 
     companion object {
-        private const val TAG = "RadioPlayer"
+        private const val TAG = "SAMPRO_ONE"
     }
 
     private lateinit var requestPermissions: RequestPermissions
@@ -50,6 +54,7 @@ class RadioPlayerActivity : AppCompatActivity() {
 
     private lateinit var clLoading: ConstraintLayout
     private lateinit var clRecordingStatus: ConstraintLayout
+    private lateinit var llAdHolder: LinearLayout
 
     private lateinit var seekBar: SeekBar
 
@@ -60,15 +65,27 @@ class RadioPlayerActivity : AppCompatActivity() {
 
     private lateinit var progressBarLoading: ProgressBar
 
+    private lateinit var template: TemplateView
+
     private var playTime = 0
 
     private var startAnimation: Boolean = false
     private var isRecording: Boolean = false
+    private var isPlayingFirstTime: Boolean = true
+
+    private lateinit var adLoader: AdLoader
+
+    private lateinit var countDownTimer: CountDownTimer
+    private var count = 0L
+    private val start = 5_000L
+    private var timer = start
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_radio_player)
+
+        MobileAds.initialize(this)
 
         supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
@@ -90,6 +107,63 @@ class RadioPlayerActivity : AppCompatActivity() {
         setStationImage(stationName)
 
         requestPermissions = RequestPermissions(this, this)
+
+        adLoader = AdLoader.Builder(this, "ca-app-pub-3940256099942544/2247696110")
+            .forNativeAd { nativeAd ->
+                val styles = NativeTemplateStyle.Builder().build()
+                template = findViewById(R.id.my_template)
+                template.setStyles(styles)
+                template.setNativeAd(nativeAd)
+            }
+            .withAdListener(object : AdListener() {
+                override fun onAdClosed() {
+                    super.onAdClosed()
+                    Toast.makeText(this@RadioPlayerActivity,"Native Ad Closed.", Toast.LENGTH_SHORT).show()
+                    Log.d(TAG, "Native Ad Closed")
+                }
+
+                override fun onAdFailedToLoad(p0: LoadAdError) {
+                    super.onAdFailedToLoad(p0)
+                    Log.d(TAG, "Native Ad Load Failed.")
+                }
+
+                override fun onAdOpened() {
+                    super.onAdOpened()
+                    Log.d(TAG, "Native Ad Opened")
+                    template.setNativeAd(null)
+                }
+
+                override fun onAdLoaded() {
+                    super.onAdLoaded()
+                    Log.d(TAG, "Native Ad Loaded")
+                    llAdHolder.visibility = View.VISIBLE
+                    template.setNativeAd(null)
+                }
+
+                override fun onAdClicked() {
+                    super.onAdClicked()
+                }
+
+                override fun onAdImpression() {
+                    super.onAdImpression()
+                }
+
+            })
+            .build()
+
+//        adLoader.loadAd(AdRequest.Builder().build())
+
+        countDownTimer = object : CountDownTimer(timer, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                count++
+            }
+
+            override fun onFinish() {
+                Toast.makeText(this@RadioPlayerActivity,"Timer Finished at $count!", Toast.LENGTH_SHORT).show()
+//                llAdHolder.visibility = View.VISIBLE
+                adLoader.loadAd(AdRequest.Builder().build())
+            }
+        }
 
 //        progressBarLoading.visibility = View.GONE
 
@@ -116,6 +190,7 @@ class RadioPlayerActivity : AppCompatActivity() {
 
         fabPlay.setOnClickListener {
 
+            Log.i("Honey","Play Clicked!!")
             if (radioPlayerService == null) {
                 bindToPlayerService()
             } else {
@@ -137,8 +212,59 @@ class RadioPlayerActivity : AppCompatActivity() {
 //                player?.pause()
 //                fabPlay.setImageResource(R.drawable.ic_play_arrow)
 //            }
-//            checkPermissions()
             val anim = AnimationUtils.loadAnimation(this, R.anim.fade_in_fade_out_color)
+
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+                if (!requestPermissions.hasWriteExternalStoragePermission() || !requestPermissions.hasRecordAudioPermission()) {
+                    checkPermissions()
+                } else {
+                    if (radioPlayerService!!.isPlaying() && !isRecording) {
+                        radioPlayerService?.startRecording()
+                        ivRecordingStatus.startAnimation(anim)
+                        fabRecord.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_record_stop))
+                        clRecordingStatus.visibility = View.VISIBLE
+                        isRecording = true
+                        startAnimation = true
+                    } else if (isRecording) {
+                        radioPlayerService?.stopRecording()
+                        ivRecordingStatus.clearAnimation()
+                        fabRecord.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_record))
+                        clRecordingStatus.visibility = View.GONE
+                        isRecording = false
+                        startAnimation = false
+                    }
+                }
+            } else {
+                if (!requestPermissions.hasReadExternalStoragePermission() || !requestPermissions.hasRecordAudioPermission()) {
+                    checkPermissions()
+                } else {
+                    if (radioPlayerService!!.isPlaying() && !isRecording) {
+                        radioPlayerService?.startRecording()
+                        ivRecordingStatus.startAnimation(anim)
+                        fabRecord.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_record_stop))
+                        clRecordingStatus.visibility = View.VISIBLE
+                        isRecording = true
+                        startAnimation = true
+                    } else if (isRecording) {
+                        radioPlayerService?.stopRecording()
+                        ivRecordingStatus.clearAnimation()
+                        fabRecord.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_record))
+                        clRecordingStatus.visibility = View.GONE
+                        isRecording = false
+                        startAnimation = false
+                    }
+                }
+            }
+//            checkPermissions()
+//            if (isRecording) {
+//                radioPlayerService?.stopRecording()
+//                ivRecordingStatus.clearAnimation()
+//                fabRecord.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_record))
+//                clRecordingStatus.visibility = View.GONE
+//                isRecording = false
+//                startAnimation = false
+//            }
+/*            val anim = AnimationUtils.loadAnimation(this, R.anim.fade_in_fade_out_color)
 
             if (radioPlayerService!!.isPlaying() && !isRecording) {
                 radioPlayerService?.startRecording()
@@ -154,7 +280,8 @@ class RadioPlayerActivity : AppCompatActivity() {
                 clRecordingStatus.visibility = View.GONE
                 isRecording = false
                 startAnimation = false
-            }
+            }*/
+
 //            if (!startAnimation) {
 //                ivRecordingStatus.startAnimation(anim)
 //                fabRecord.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_record_stop))
@@ -187,9 +314,13 @@ class RadioPlayerActivity : AppCompatActivity() {
             stopPlayerService()
             fabPlay.setImageResource(R.drawable.ic_play_arrow)
             tvPlayTime.text = "Stopped."
+            llAdHolder.visibility = View.GONE
         }
 
 //        startPlayerService()
+        if (!applicationContext.isServiceRunning(RadioPlayerService::class.java.name)) {
+            bindToPlayerService()
+        }
     }
 
     private fun setupViewControls() {
@@ -201,6 +332,7 @@ class RadioPlayerActivity : AppCompatActivity() {
 
         clLoading = findViewById(R.id.clLoading)
         clRecordingStatus = findViewById(R.id.clRecordingStatus)
+        llAdHolder = findViewById(R.id.llAdHolder)
 
         ivPlayer = findViewById(R.id.ivPlayer)
         ivRecordingStatus = findViewById(R.id.ivRecordingStatus)
@@ -256,6 +388,16 @@ class RadioPlayerActivity : AppCompatActivity() {
                 Log.i(TAG,"Storage Read Write and Record Audio Permission Denied!")
             } else {
                 Log.i(TAG,"Storage Read Write and Record Audio Permission Accepted!")
+                val anim = AnimationUtils.loadAnimation(this, R.anim.fade_in_fade_out_color)
+
+                if (radioPlayerService!!.isPlaying() && !isRecording) {
+                    radioPlayerService?.startRecording()
+                    ivRecordingStatus.startAnimation(anim)
+                    fabRecord.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_record_stop))
+                    clRecordingStatus.visibility = View.VISIBLE
+                    isRecording = true
+                    startAnimation = true
+                }
             }
         } else if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
             if (!requestPermissions.hasReadExternalStoragePermission() || !requestPermissions.hasRecordAudioPermission()) {
@@ -264,6 +406,23 @@ class RadioPlayerActivity : AppCompatActivity() {
                 Log.i(TAG,"Storage Read Write and Record Audio Permission Denied!")
             } else {
                 Log.i(TAG,"Storage Read Write and Record Audio Permission Accepted!")
+                val anim = AnimationUtils.loadAnimation(this, R.anim.fade_in_fade_out_color)
+
+                if (radioPlayerService!!.isPlaying() && !isRecording) {
+                    radioPlayerService?.startRecording()
+                    ivRecordingStatus.startAnimation(anim)
+                    fabRecord.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_record_stop))
+                    clRecordingStatus.visibility = View.VISIBLE
+                    isRecording = true
+                    startAnimation = true
+                } else if (isRecording) {
+                    radioPlayerService?.stopRecording()
+                    ivRecordingStatus.clearAnimation()
+                    fabRecord.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_record))
+                    clRecordingStatus.visibility = View.GONE
+                    isRecording = false
+                    startAnimation = false
+                }
             }
         }
 
@@ -296,6 +455,10 @@ class RadioPlayerActivity : AppCompatActivity() {
                         tvPlayTime.text = "Playing"
 //                        progressBarLoading.visibility = View.GONE
                         clLoading.visibility = View.GONE
+                        if (isPlayingFirstTime) {
+                            countDownTimer.start()
+                            isPlayingFirstTime = false
+                        }
                     }
                 }
             }
@@ -340,18 +503,13 @@ class RadioPlayerActivity : AppCompatActivity() {
         radioPlayerService?.stopRecording()
         unbindPlayerService()
         stopService(Intent(this, RadioPlayerService::class.java))
-
         radioPlayerService = null
+        tvPlayTime.text = "Stopped."
     }
-
 
     override fun onStart() {
         super.onStart()
-
-        if (!applicationContext.isServiceRunning(RadioPlayerService::class.java.name)) {
-            bindToPlayerService()
-        }
-
+        var m = 0
     }
 
     private fun setStationImage(station: String) {
@@ -383,20 +541,23 @@ class RadioPlayerActivity : AppCompatActivity() {
             "OBN Radio" -> {
                 ivPlayer.setImageResource(R.drawable.obn_radio_01)
             }
-            else -> {
+            "EBC National Radio" -> {
+                ivPlayer.setImageResource(R.drawable.ebc_national_radio_01)
+            } else -> {
                 ivPlayer.setImageResource(R.drawable.ic_baseline_radio)
             }
         }
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         stopPlayerService()
+        super.onDestroy()
     }
 
     override fun onBackPressed() {
-        super.onBackPressed()
         stopPlayerService()
+        super.onBackPressed()
+        finish()
     }
 
     override fun onSupportNavigateUp(): Boolean {

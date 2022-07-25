@@ -19,6 +19,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HabeshaRadios"
         android:usesCleartextTraffic="true">
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-7004189044421986~3858358531"/>
         <activity
             android:name=".RecordingsPlayerActivity"
             android:exported="false"

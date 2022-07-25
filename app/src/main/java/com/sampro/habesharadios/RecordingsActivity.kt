@@ -12,6 +12,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.customview.customView
+import com.google.android.gms.ads.*
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.google.android.gms.ads.rewarded.RewardItem
+import com.google.android.gms.ads.rewarded.RewardedAd
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.sampro.habesharadios.adapter.RecordingsAdapter
 import com.sampro.habesharadios.model.StationsModelParcelable
 import java.io.File
@@ -19,9 +25,18 @@ import java.util.ArrayList
 
 class RecordingsActivity : AppCompatActivity() {
 
+    private companion object{
+        private const val TAG = "SAMUEL"
+    }
+
     private lateinit var rvRecordings: RecyclerView
     private lateinit var adapter: RecordingsAdapter
     private var recordings: MutableList<Pair<File, Int>> = ArrayList()
+
+    private var mInterstitialAd: InterstitialAd? = null
+
+    private var mRewardedAd: RewardedAd? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +47,9 @@ class RecordingsActivity : AppCompatActivity() {
             setDisplayHomeAsUpEnabled(true)
             setDisplayShowHomeEnabled(true)
         }
+
+        MobileAds.initialize(this)
+//        buildAdd()
 
         rvRecordings = findViewById(R.id.rvRecordings)
         val layoutManager = LinearLayoutManager(this)
@@ -57,12 +75,111 @@ class RecordingsActivity : AppCompatActivity() {
 
             override fun onImgDeleteClick(position: Int) {
                 val fileToDelete = recordings[position].first
-                val x = fileToDelete.toUri()
                 showDeleteConfirmationDialog(fileToDelete)
             }
 
         })
 
+//        buildInterstitialAd()
+//        buildRewardedAd()
+    }
+
+    private fun buildRewardedAd() {
+        val adRequest = AdRequest.Builder().build()
+
+        RewardedAd.load(this, "ca-app-pub-3940256099942544/5224354917", adRequest, object : RewardedAdLoadCallback() {
+            override fun onAdLoaded(rewardedAd: RewardedAd) {
+                Log.d(TAG, "Rewarded Ad was Loaded.")
+                mRewardedAd = rewardedAd
+                mRewardedAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                    override fun onAdFailedToShowFullScreenContent(p0: AdError) {
+                        super.onAdFailedToShowFullScreenContent(p0)
+                        mRewardedAd = null
+                        /// perform your action here when ad will not load
+                    }
+
+                    override fun onAdShowedFullScreenContent() {
+                        super.onAdShowedFullScreenContent()
+                        mRewardedAd = null
+                    }
+
+                    override fun onAdDismissedFullScreenContent() {
+                        super.onAdDismissedFullScreenContent()
+                        mRewardedAd = null
+                        Log.d(TAG,"Add Closed")
+                        Toast.makeText(this@RecordingsActivity,"Ad Closed!", Toast.LENGTH_SHORT).show()
+                        //// perform your code that you wants to do after ad dismissed or closed
+                    }
+                }
+                loadRewardedAd()
+            }
+
+            override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                Log.d(TAG, loadAdError.message)
+                mRewardedAd = null
+            }
+
+        })
+    }
+
+    private fun loadRewardedAd() {
+        if (mRewardedAd != null) {
+            mRewardedAd?.show(this) {
+                val rewardAmount = it.amount
+                val rewardType = it.type
+                Log.d(TAG, "User earned the reward $rewardType $rewardAmount.")
+            }
+        } else {
+            Log.d(TAG, "Rewarded Ad wasn't ready yet.")
+        }
+    }
+
+    private fun buildInterstitialAd() {
+        val adRequest = AdRequest.Builder().build()
+
+        InterstitialAd.load(this,"ca-app-pub-3940256099942544/1033173712",adRequest, object : InterstitialAdLoadCallback() {
+            override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                Log.d(TAG, loadAdError.message)
+                mInterstitialAd = null
+            }
+
+            override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                Log.d(TAG, "Ad was Loaded.")
+                mInterstitialAd = interstitialAd
+                mInterstitialAd?.fullScreenContentCallback =
+                    object : FullScreenContentCallback() {
+                        override fun onAdDismissedFullScreenContent() {
+                            super.onAdDismissedFullScreenContent()
+                            mInterstitialAd = null
+                            Log.d(TAG,"Add Closed")
+                            Toast.makeText(this@RecordingsActivity,"Ad Closed!", Toast.LENGTH_SHORT).show()
+                            //// perform your code that you wants to do after ad dismissed or closed
+                        }
+
+                        override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                            super.onAdFailedToShowFullScreenContent(adError)
+                            mInterstitialAd = null
+
+                            /// perform your action here when ad will not load
+                        }
+
+                        override fun onAdShowedFullScreenContent() {
+                            super.onAdShowedFullScreenContent()
+                            mInterstitialAd = null
+                        }
+                    }
+                loadInterstitialAd()
+            }
+        })
+    }
+
+    private fun loadInterstitialAd() {
+
+        if (mInterstitialAd != null) {
+            mInterstitialAd?.show(this)
+        } else {
+            Log.d(TAG, "The interstitial ad wasn't ready yet.")
+        }
     }
 
     private fun getRadioStationName(name: String) : String {
